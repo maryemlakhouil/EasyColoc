@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ColocationController;
 
 
 Route::get('/', function () {
@@ -21,6 +22,10 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'banned'])->group(function () {
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
+    Route::get('/colocations/create', [ColocationController::class, 'create'])->name('colocations.create');
+    Route::post('/colocations', [ColocationController::class, 'store'])->name('colocations.store');
+
+    Route::get('/colocations/{colocation}', [ColocationController::class, 'show'])->name('colocations.show');
 });
 
 
@@ -28,9 +33,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', fn () => 'Admin Dashboard');
 });
 
-Route::middleware(['auth', 'role:owner'])->group(function () {
-    
-});
 
 require __DIR__.'/auth.php';
 
