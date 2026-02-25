@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->role === 'member'; 
     }
 
+    public function colocationsOwned()
+    {
+        return $this->hasMany(Colocation::class, 'owner_id');
+    }
+
    
 }
 

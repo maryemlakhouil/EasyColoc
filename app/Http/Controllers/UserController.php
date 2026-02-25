@@ -8,10 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function show()
-    {
-        return view('profile.custom');
-    }
+    
 
         
     public function update(Request $request)

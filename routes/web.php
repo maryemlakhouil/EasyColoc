@@ -19,6 +19,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::middleware(['auth', 'banned'])->group(function () {
+    Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
+});
 
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -30,5 +33,7 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+
 
 
