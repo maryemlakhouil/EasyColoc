@@ -4,6 +4,10 @@
     </x-slot>
 
     <div class="py-6 max-w-xl mx-auto space-y-4">
+        @if(session('info'))
+            <div class="text-blue-600">{{ session('info') }}</div>
+        @endif
+
         <div class="bg-white p-6 rounded shadow">
             <p>Colocation : <strong>{{ $invitation->colocation->name }}</strong></p>
             <p>Owner : <strong>{{ $invitation->colocation->owner->name }}</strong></p>
