@@ -26,6 +26,8 @@ Route::middleware(['auth', 'banned'])->group(function () {
     Route::get('/colocations/create', [ColocationController::class, 'create'])->name('colocations.create');
     Route::post('/colocations', [ColocationController::class, 'store'])->name('colocations.store');
     Route::get('/colocations/{colocation}', [ColocationController::class, 'show'])->name('colocations.show');
+    Route::get('/my-colocation', [ColocationController::class, 'my'])->name('colocations.my');
+
 
     Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
     Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept'])->name('invitations.accept');

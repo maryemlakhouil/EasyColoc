@@ -18,6 +18,9 @@
                    <x-nav-link :href="route('colocations.create')" :active="request()->routeIs('colocations.*')">
                         {{ __('Colocation') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('colocations.my')" :active="request()->routeIs('colocations.my')">
+                        {{ __('Ma colocation') }}
+                    </x-nav-link>
                 </div>
             </div>
 
