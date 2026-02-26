@@ -12,6 +12,18 @@ class Colocation extends Model
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
+    public function members()
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'colocation_user')
+            ->withPivot(['status', 'left_at'])
+            ->withTimestamps();
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(\App\Models\Invitation::class);
+    }
 }
 
 

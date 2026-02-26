@@ -14,6 +14,13 @@ return new class extends Migration
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->foreignId('colocation_id')->constrained()->cascadeOnDelete();
+
+            $table->string('invited_email');
+            $table->string('token')->unique();
+            $table->enum('status', ['pending', 'accepted', 'refused', 'expired'])->default('pending');
+            $table->timestamp('expires_at')->nullable();
+
         });
     }
 
