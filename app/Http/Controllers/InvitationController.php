@@ -61,7 +61,7 @@ class InvitationController extends Controller
     }
 
     // utilisateur voit la page accept/refuse
-    
+
     public function show(Request $request, string $token)
     {
         $invitation = Invitation::where('token', $token)->with('colocation.owner')->firstOrFail();
@@ -75,7 +75,18 @@ class InvitationController extends Controller
             return redirect()->route('dashboard')->with('error', 'Invitation expirée.');
         }
 
-        // Vérifier email: l’email du compte connecté doit correspondre à l’invitation
+        // Si guest : décider login ou register
+        if (!auth()->check()) {
+            $emailExists = User::where('email', $invitation->invited_email)->exists();
+
+            $target = $emailExists ? route('login') : route('register');
+
+            // guest() garde l'URL intended => après login/register on revient ici
+            return redirect()->guest($target)
+                ->with('info', 'Connectez-vous / inscrivez-vous avec le même email que l’invitation.');
+        }
+
+        // Si connecté : vérifier que l’email correspond à l’invitation
         if ($request->user()->email !== $invitation->invited_email) {
             abort(403);
         }
@@ -131,8 +142,7 @@ class InvitationController extends Controller
 
         $invitation->update(['status' => 'accepted']);
 
-        return redirect()->route('colocations.show', $colocation)
-            ->with('success', 'Invitation acceptée. Bienvenue !');
+        return redirect()->route('dashboard')->with('success', 'Invitation acceptée.');
     }
 
     public function refuse(Request $request, string $token)
@@ -154,5 +164,6 @@ class InvitationController extends Controller
         $invitation->colocation->members()->detach($request->user()->id);
 
         return redirect()->route('dashboard')->with('success', 'Invitation refusée.');
+        
     }
 }
