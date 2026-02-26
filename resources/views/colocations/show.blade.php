@@ -5,7 +5,10 @@
 
     <div class="py-6 max-w-3xl mx-auto">
         @if(session('success'))
-            <div class="mb-4 text-green-600">{{ session('success') }}</div>
+            <div class="text-green-600 mb-2">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="text-red-600 mb-2">{{ session('error') }}</div>
         @endif
 
         <div class="bg-white p-6 rounded shadow space-y-2">

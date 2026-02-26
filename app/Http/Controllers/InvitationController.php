@@ -61,6 +61,7 @@ class InvitationController extends Controller
     }
 
     // utilisateur voit la page accept/refuse
+    
     public function show(Request $request, string $token)
     {
         $invitation = Invitation::where('token', $token)->with('colocation.owner')->firstOrFail();
