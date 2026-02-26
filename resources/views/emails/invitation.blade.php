@@ -5,7 +5,7 @@
 <p>
     Cliquez ici :
     <a href="{{ route('invitations.show', $invitation->token) }}">
-        Voir l’invitation
+    Ouvrir l’invitation
     </a>
 </p>
 
