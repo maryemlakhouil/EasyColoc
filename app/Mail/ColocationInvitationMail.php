@@ -58,5 +58,6 @@ class ColocationInvitationMail extends Mailable
         return $this->subject('Invitation à rejoindre une colocation')
             ->view('emails.invitation');
     }
+   
 }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Colocation;
 use App\Http\Requests\StoreColocationRequest;   
+use App\Models\User;
 
 class ColocationController extends Controller
 {
@@ -43,7 +44,10 @@ class ColocationController extends Controller
     public function show(Colocation $colocation)
     {
         $colocation->load('owner');
-        return view('colocations.show', compact('colocation'));
+
+        $usersEmails = User::orderBy('email')->get(['id', 'email']);
+
+        return view('colocations.show', compact('colocation', 'usersEmails'));
     }
 
     public function my()
@@ -76,3 +80,6 @@ class ColocationController extends Controller
             ->with('error', 'Vous n’avez pas de colocation active.');
     }
 }
+
+
+
