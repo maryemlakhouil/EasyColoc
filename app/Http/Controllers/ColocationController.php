@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Colocation;
+use App\Http\Requests\StoreColocationRequest;   
 
 class ColocationController extends Controller
 {
@@ -13,7 +15,7 @@ class ColocationController extends Controller
 
     public function store(StoreColocationRequest $request)
     {
-        $user = $request->user();
+        $user = $request->user();   
 
         // Règle: un user ne peut pas créer une nouvelle colocation s'il en a déjà une active (owner)
 
@@ -42,5 +44,35 @@ class ColocationController extends Controller
     {
         $colocation->load('owner');
         return view('colocations.show', compact('colocation'));
+    }
+
+    public function my()
+    {
+        $user = auth()->user();
+
+        // si owner: sa colocation active
+        if ($user->role === 'owner') {
+            $colocation = Colocation::where('owner_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($colocation) {
+                return redirect()->route('colocations.show', $colocation);
+            }
+        }
+
+        // si member: colocation acceptée active (pivot)
+        $colocation = $user->colocations()
+            ->wherePivot('status', 'accepted')
+            ->wherePivot('left_at', null)
+            ->where('colocations.status', 'active')
+            ->first();
+
+        if ($colocation) {
+            return redirect()->route('colocations.show', $colocation);
+        }
+
+        return redirect()->route('colocations.create')
+            ->with('error', 'Vous n’avez pas de colocation active.');
     }
 }
