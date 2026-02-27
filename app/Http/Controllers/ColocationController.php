@@ -43,7 +43,13 @@ class ColocationController extends Controller
 
     public function show(Colocation $colocation)
     {
-        $colocation->load('owner');
+        $colocation->load([
+        'owner',
+        'members' => function ($q) {
+            $q->wherePivot('status', 'accepted')
+              ->wherePivot('left_at', null);
+        }
+    ]);
 
         $usersEmails = User::orderBy('email')->get(['id', 'email']);
 
@@ -79,6 +85,7 @@ class ColocationController extends Controller
         return redirect()->route('colocations.create')
             ->with('error', 'Vous n’avez pas de colocation active.');
     }
+ 
 }
 
 

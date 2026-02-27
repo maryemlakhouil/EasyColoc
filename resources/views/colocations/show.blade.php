@@ -33,5 +33,39 @@
     </form>
   
 @endif
+
+<div class="mt-6 bg-white p-6 rounded shadow">
+    <h3 class="font-semibold text-lg mb-4">Membres</h3>
+
+    <ul class="space-y-3">
+        @foreach($colocation->members as $member)
+            <li class="flex items-center justify-between border-b pb-2">
+                <div>
+                    <div class="font-medium">
+                        {{ $member->name }} <span class="text-gray-500">({{ $member->email }})</span>
+                    </div>
+
+                    <div class="text-sm text-gray-600">
+                        Rôle :
+                        @if($member->id === $colocation->owner_id)
+                            <span class="font-semibold">Owner</span>
+                        @else
+                            <span class="font-semibold">Member</span>
+                        @endif
+                        — Réputation : <span class="font-semibold">{{ $member->reputation_score ?? 0 }}</span>
+                    </div>
+                </div>
+
+                <div class="text-sm text-gray-500">
+                    Statut : {{ $member->pivot->status }}
+                </div>
+            </li>
+        @endforeach
+    </ul>
+
+    @if($colocation->members->isEmpty())
+        <p class="text-gray-500">Aucun membre pour le moment.</p>
+    @endif
+</div>
 </x-app-layout>
 

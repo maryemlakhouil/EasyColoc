@@ -24,8 +24,17 @@ class Colocation extends Model
     {
         return $this->hasMany(\App\Models\Invitation::class);
     }
-}
 
+    public function categories()
+    {
+        return $this->hasMany(\App\Models\Category::class);
+    }
+
+   public function depences()
+    {
+        return $this->hasMany(\App\Models\Depence::class);
+    }
+}
 
 
 
