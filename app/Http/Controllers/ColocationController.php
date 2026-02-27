@@ -30,6 +30,7 @@ class ColocationController extends Controller
             'owner_id' => $user->id,
             'status' => 'active',
         ]);
+        
         \App\Models\Category::firstOrCreate([
             'colocation_id' => $colocation->id,
             'name' => 'Général',
