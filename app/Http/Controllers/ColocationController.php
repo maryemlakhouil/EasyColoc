@@ -30,11 +30,24 @@ class ColocationController extends Controller
             'owner_id' => $user->id,
             'status' => 'active',
         ]);
-        
-        \App\Models\Category::firstOrCreate([
-            'colocation_id' => $colocation->id,
-            'name' => 'Général',
-        ]);
+
+       $defaultCategories = [
+            'Général',
+            'Loyer',
+            'Électricité',
+            'Eau',
+            'Internet',
+            'Courses',
+            'Transport',
+            'Entretien',
+        ];
+
+        foreach ($defaultCategories as $catName) {
+            \App\Models\Category::firstOrCreate([
+                'colocation_id' => $colocation->id,
+                'name' => $catName,
+            ]);
+        }
 
         // On peut aussi mettre son role en "owner" ici 
         // mais ça sera mieux quand on aura Membership. Pour l’instant simple :
