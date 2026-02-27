@@ -9,7 +9,7 @@ use App\Models\Colocation;
 
 class CategoryController extends Controller
 {
-      public function store(StoreCategoryRequest $request, Colocation $colocation)
+    public function store(StoreCategoryRequest $request, Colocation $colocation)
     {
         // option: owner only
         if ($colocation->owner_id !== $request->user()->id) {
@@ -24,7 +24,7 @@ class CategoryController extends Controller
         return back()->with('success', 'Catégorie ajoutée.');
     }
 
-      public function destroy(Category $category)
+    public function destroy(Category $category)
     {
         // option: owner only
         if ($category->colocation->owner_id !== auth()->id()) {
