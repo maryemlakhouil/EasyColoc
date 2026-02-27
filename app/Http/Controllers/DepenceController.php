@@ -6,11 +6,14 @@ use App\Http\Requests\StoreDepenceRequest;
 use App\Models\Colocation;
 use App\Models\Depence;
 use Illuminate\Http\Request;
+use App\Models\User;
+
 
 class DepenceController extends Controller
 {
     public function index(Request $request, Colocation $colocation)
     {
+
         $members = $colocation->members()->wherePivot('status','accepted')->wherePivot('left_at', null)->get();
         $this->authorizeColocationAccess($request->user(), $colocation);
 
@@ -34,10 +37,31 @@ class DepenceController extends Controller
 
         $categories = $colocation->categories()->orderBy('name')->get();
 
+        $acceptedMembers = $colocation->members()
+        ->wherePivot('status', 'accepted')
+        ->wherePivot('left_at', null)
+        ->get();
+
+        $owner = $colocation->owner()->first();
+
+        $members = $acceptedMembers
+            ->push($owner)
+            ->unique('id')
+            ->values();
+
+         $excludedIds = $members->pluck('id')->toArray(); // membres actuels + owner
+
+        $availableUsers = User::whereNotIn('id', $excludedIds)
+            ->orderBy('email')
+            ->get(['id','email']);
+
         return view('depences.index', compact(
-            'colocation','depences','categories','month','year','byMember','byCategory','balances','settlements','members'
+            'colocation','depences','categories','month','year','byMember','byCategory','balances','settlements','members','availableUsers',
         ));
+
     }
+
+
 
     public function store(StoreDepenceRequest $request, Colocation $colocation)
     {
