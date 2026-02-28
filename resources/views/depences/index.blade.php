@@ -24,9 +24,21 @@
                 {{ session('success') }}
             </div>
         @endif
+
         @if(session('error'))
             <div class="bg-red-50 text-red-700 border border-red-200 p-3 rounded-xl">
                 {{ session('error') }}
+            </div>
+        @endif
+
+        {{-- Validation errors --}}
+        @if ($errors->any())
+            <div class="bg-red-50 text-red-700 border border-red-200 p-3 rounded-xl">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -87,6 +99,7 @@
                                             </div>
                                         </td>
 
+                                        {{-- ✅ FIX: amount from depence --}}
                                         <td class="py-3 px-4 font-semibold">
                                             {{ number_format($e->amount, 2) }} €
                                         </td>
@@ -114,7 +127,7 @@
                     </div>
                 </div>
 
-                {{-- (Optionnel) Synthèses + balances en bas --}}
+                {{-- Synthèses --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow border">
                         <h3 class="font-semibold mb-3">Synthèse par membre (total payé)</h3>
@@ -143,6 +156,7 @@
                     </div>
                 </div>
 
+                {{-- Balances --}}
                 <div class="bg-white p-6 rounded-2xl shadow border">
                     <h3 class="font-semibold mb-3">Balances</h3>
                     @if($balances->isEmpty())
@@ -165,32 +179,42 @@
             {{-- COLONNE DROITE --}}
             <div class="space-y-6">
 
+                {{-- Résumé --}}
+                <div class="bg-white rounded-2xl shadow border p-4">
+                    <h3 class="font-semibold mb-2">Résumé</h3>
+                    <p>Total dépenses : <strong>{{ number_format($total, 2) }}</strong></p>
+                    <p>Nombre de membres : <strong>{{ $members->count() }}</strong></p>
+                    <p>Part individuelle : <strong>{{ number_format($share, 2) }}</strong></p>
+                </div>
+
                 {{-- Qui doit à qui --}}
                 <div class="bg-white rounded-2xl shadow border p-4">
                     <h3 class="font-semibold mb-3">Qui doit à qui ?</h3>
 
-                    @if(empty($settlements))
+                    @if($openSettlements->isEmpty())
                         <p class="text-gray-500 text-sm">Aucun remboursement nécessaire.</p>
                     @else
-                        <div class="space-y-3">
-                            @foreach($settlements as $s)
-                                <div class="rounded-xl border p-3 flex items-center justify-between">
-                                    <div>
-                                        <div class="text-sm text-gray-600">
-                                            User {{ $s['from'] }} → User {{ $s['to'] }}
-                                        </div>
-                                        <div class="text-lg font-semibold text-emerald-600">
-                                            {{ number_format($s['amount'], 2) }} €
-                                        </div>
+                        <ul class="space-y-2">
+                            @foreach($openSettlements as $s)
+                                <li class="rounded-xl border p-3 flex items-center justify-between">
+                                    <div class="text-sm text-gray-700">
+                                        <strong>{{ $s->fromUser->name }}</strong>
+                                        doit
+                                        {{-- ✅ FIX: montant from regle --}}
+                                        <strong>{{ number_format($s->montant, 2) }} €</strong>
+                                        à
+                                        <strong>{{ $s->toUser->name }}</strong>
                                     </div>
 
-                                    {{-- bouton demo (paiement plus tard) --}}
-                                    <button class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50">
-                                        Marquer payé
-                                    </button>
-                                </div>
+                                    <form method="POST" action="{{ route('settlements.pay', $s) }}">
+                                        @csrf
+                                        <button class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50">
+                                            Marquer payé
+                                        </button>
+                                    </form>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
                     @endif
                 </div>
 
@@ -278,7 +302,8 @@
                                     class="mt-1 w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     required>
                                 @foreach($members as $m)
-                                    <option value="{{ $m->id }}" @selected(auth()->id() === $m->id)>
+                                    {{-- ✅ FIX: default owner --}}
+                                    <option value="{{ $m->id }}" @selected($m->id === $colocation->owner_id)>
                                         {{ $m->name }}
                                     </option>
                                 @endforeach
@@ -311,88 +336,93 @@
             </div>
         </div>
     </div>
+
+    {{-- MODAL Invitation --}}
     <div id="inviteModal" class="fixed inset-0 z-50 hidden">
-    <div id="inviteModalOverlay" class="absolute inset-0 bg-black/50"></div>
+        <div id="inviteModalOverlay" class="absolute inset-0 bg-black/50"></div>
 
-    <div class="relative min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
-                <h3 class="text-xl font-semibold">Inviter un membre</h3>
-                <button type="button" id="closeInviteModal" class="p-2 rounded-lg hover:bg-gray-100">✕</button>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl">
+                <div class="flex items-center justify-between px-6 py-4 border-b">
+                    <h3 class="text-xl font-semibold">Inviter un membre</h3>
+                    <button type="button" id="closeInviteModal" class="p-2 rounded-lg hover:bg-gray-100">✕</button>
+                </div>
+
+                <form method="POST" action="{{ route('invitations.store', $colocation) }}" class="p-6 space-y-4">
+                    @csrf
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <select name="email" class="mt-1 w-full border rounded-lg p-2" required>
+                            <option value="">Choisir un email...</option>
+                            @foreach($availableUsers as $u)
+                                <option value="{{ $u->email }}">{{ $u->email }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" id="cancelInviteModal" class="px-4 py-2 rounded-lg border">
+                            Annuler
+                        </button>
+                        <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                            Envoyer invitation
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <form method="POST" action="{{ route('invitations.store', $colocation) }}" class="p-6 space-y-4">
-                @csrf
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <select name="email" class="mt-1 w-full border rounded-lg p-2" required>
-                        <option value="">Choisir un email...</option>
-                        @foreach($availableUsers as $u)
-                            <option value="{{ $u->email }}">{{ $u->email }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" id="cancelInviteModal" class="px-4 py-2 rounded-lg border">
-                        Annuler
-                    </button>
-                    <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-                        Envoyer invitation
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
     <script>
-        const modal = document.getElementById('expenseModal');
-        const openBtn = document.getElementById('openExpenseModal');
-        const closeBtn = document.getElementById('closeExpenseModal');
-        const cancelBtn = document.getElementById('cancelExpenseModal');
-        const overlay = document.getElementById('expenseModalOverlay');
+        // Expense modal
+        const expenseModal = document.getElementById('expenseModal');
+        const openExpenseBtn = document.getElementById('openExpenseModal');
+        const closeExpenseBtn = document.getElementById('closeExpenseModal');
+        const cancelExpenseBtn = document.getElementById('cancelExpenseModal');
+        const expenseOverlay = document.getElementById('expenseModalOverlay');
 
-        function openModal() {
-            modal.classList.remove('hidden');
+        function openExpenseModal() {
+            expenseModal.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
         }
-
-        function closeModal() {
-            modal.classList.add('hidden');
+        function closeExpenseModal() {
+            expenseModal.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
         }
 
-        openBtn?.addEventListener('click', openModal);
-        closeBtn?.addEventListener('click', closeModal);
-        cancelBtn?.addEventListener('click', closeModal);
-        overlay?.addEventListener('click', closeModal);
+        openExpenseBtn?.addEventListener('click', openExpenseModal);
+        closeExpenseBtn?.addEventListener('click', closeExpenseModal);
+        cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
+        expenseOverlay?.addEventListener('click', closeExpenseModal);
 
+        // Invite modal
+        const inviteModal = document.getElementById('inviteModal');
+        const openInviteBtn = document.getElementById('openInviteModal');
+        const closeInviteBtn = document.getElementById('closeInviteModal');
+        const cancelInviteBtn = document.getElementById('cancelInviteModal');
+        const inviteOverlay = document.getElementById('inviteModalOverlay');
+
+        function openInviteModal() {
+            inviteModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        function closeInviteModal() {
+            inviteModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        openInviteBtn?.addEventListener('click', openInviteModal);
+        closeInviteBtn?.addEventListener('click', closeInviteModal);
+        cancelInviteBtn?.addEventListener('click', closeInviteModal);
+        inviteOverlay?.addEventListener('click', closeInviteModal);
+
+        // ESC to close any modal
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape') {
+                closeExpenseModal();
+                closeInviteModal();
+            }
         });
-   
-    const inviteModal = document.getElementById('inviteModal');
-    const openInviteBtn = document.getElementById('openInviteModal');
-    const closeInviteBtn = document.getElementById('closeInviteModal');
-    const cancelInviteBtn = document.getElementById('cancelInviteModal');
-    const inviteOverlay = document.getElementById('inviteModalOverlay');
-
-    function openInviteModal() {
-        inviteModal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-    }
-    function closeInviteModal() {
-        inviteModal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    openInviteBtn?.addEventListener('click', openInviteModal);
-    closeInviteBtn?.addEventListener('click', closeInviteModal);
-    cancelInviteBtn?.addEventListener('click', closeInviteModal);
-    inviteOverlay?.addEventListener('click', closeInviteModal);
-</script>
-
-    
+    </script>
 </x-app-layout>

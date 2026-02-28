@@ -9,6 +9,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\DepenceController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AdminController;
+
+
+
 
 
 Route::get('/', function () {
@@ -47,12 +52,15 @@ Route::middleware(['auth', 'banned'])->group(function () {
         ->name('depences.store');
     Route::delete('/depences/{depence}', [DepenceController::class, 'destroy'])
         ->name('depences.destroy');
+    Route::post('/regles/{regle}/pay', [PaymentController::class, 'pay'])->name('settlements.pay');
+
 });
 Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
 
-
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', fn () => 'Admin Dashboard');
+Route::middleware(['auth','banned','role:admin'])->group(function () {
+    Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::post('/admin/users/{user}/ban', [AdminController::class, 'ban'])->name('admin.users.ban');
+    Route::post('/admin/users/{user}/unban', [AdminController::class, 'unban'])->name('admin.users.unban');
 });
 
 Route::middleware(['auth', 'banned', 'role:owner'])->group(function () {
@@ -62,7 +70,6 @@ Route::middleware(['auth', 'banned', 'role:owner'])->group(function () {
     Route::post('/colocations/{colocation}/members/{user}/remove', [MembershipController::class, 'remove'])
         ->name('colocations.members.remove');
 });
-
 
 
 

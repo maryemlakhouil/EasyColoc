@@ -21,6 +21,11 @@
                     <x-nav-link :href="route('colocations.my')" :active="request()->routeIs('colocations.my')">
                         {{ __('Ma colocation') }}
                     </x-nav-link>
+                    @if(auth()->user()->role === 'admin')
+                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                            {{ __('Admin') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
