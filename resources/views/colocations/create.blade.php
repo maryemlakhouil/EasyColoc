@@ -28,8 +28,13 @@
         }
 
         body {
-            @apply bg-gradient-to-br from-slate-900 to-slate-800;
             font-family: 'Figtree', sans-serif;
+            background:
+                radial-gradient(900px 500px at 15% 10%, rgba(59,130,246,.18), transparent 60%),
+                radial-gradient(900px 500px at 90% 5%, rgba(6,182,212,.14), transparent 60%),
+                radial-gradient(900px 500px at 50% 95%, rgba(16,185,129,.10), transparent 60%),
+                linear-gradient(135deg, #0B1220, #0F172A);
+            color: rgba(255, 255, 255, .92);
         }
     </style>
 </head>
@@ -49,57 +54,54 @@
                 </a>
             </div>
 
-           @php
-    $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+            @php
+                $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+                $dashboardRoute = $isAdmin ? 'admin.dashboard' : 'dashboard';
+                $isDashboardActive = request()->routeIs($dashboardRoute);
+                $isColocActive = request()->routeIs('colocations.*');
+                $isProfileActive = request()->routeIs('profile.*');
 
-    // Route cible du bouton "Dashboard"
-    $dashboardRoute = $isAdmin ? 'admin.dashboard' : 'dashboard';
+                $linkBase = "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors";
+                $linkInactive = "text-gray-400 hover:bg-slate-800 hover:text-white";
+                $linkActive = "text-blue-400 bg-slate-800 font-medium";
+            @endphp
 
-    // Active state
-    $isDashboardActive = request()->routeIs($dashboardRoute);
-    $isColocActive = request()->routeIs('colocations.*');
-    $isProfileActive = request()->routeIs('profile.*');
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                {{-- Dashboard --}}
+                <a href="{{ route($dashboardRoute) }}"
+                   class="{{ $linkBase }} {{ $isDashboardActive ? $linkActive : $linkInactive }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 9l-3-3m0 0l-3 3m3-3v5" />
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
 
-    $linkBase = "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors";
-    $linkInactive = "text-gray-400 hover:bg-slate-800 hover:text-white";
-    $linkActive = "text-blue-400 bg-slate-800 font-medium";
-@endphp
+                {{-- Colocations --}}
+                @if(!$isAdmin)
+                    <a href="{{ route('colocations.my') }}"
+                       class="{{ $linkBase }} {{ $isColocActive ? $linkActive : $linkInactive }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Colocations</span>
+                    </a>
+                @endif
 
-<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-    {{-- Dashboard --}}
-    <a href="{{ route($dashboardRoute) }}"
-       class="{{ $linkBase }} {{ $isDashboardActive ? $linkActive : $linkInactive }}">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 9l-3-3m0 0l-3 3m3-3v5" />
-        </svg>
-        <span>Dashboard</span>
-    </a>
+                <div class="border-t border-slate-700 my-4"></div>
 
-    {{-- Colocations (accessible aux membres/owners; si admin tu peux la cacher) --}}
-    @if(!$isAdmin)
-        <a href="{{ route('colocations.my') }}"
-           class="{{ $linkBase }} {{ $isColocActive ? $linkActive : $linkInactive }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-            </svg>
-            <span>Colocations</span>
-        </a>
-    @endif
+                {{-- Profil --}}
+                <a href="{{ route('profile.edit') }}"
+                   class="{{ $linkBase }} {{ $isProfileActive ? $linkActive : $linkInactive }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Profil</span>
+                </a>
+            </nav>
 
-    <div class="border-t border-slate-700 my-4"></div>
-
-    {{-- Profil --}}
-    <a href="{{ route('profile.edit') }}"
-       class="{{ $linkBase }} {{ $isProfileActive ? $linkActive : $linkInactive }}">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>Profil</span>
-    </a>
-</nav>
             <!-- Reputation Section -->
             <div class="px-4 py-6 border-t border-slate-700 space-y-3">
                 <div class="text-xs font-semibold text-gray-400 uppercase">Votre Réputation</div>
@@ -128,7 +130,7 @@
         <!-- Main Content -->
         <div class="flex-1 ml-64 flex flex-col">
             <!-- Header -->
-            <header class="bg-slate-800/50 border-b border-slate-700 px-8 py-4 backdrop-blur sticky top-0 z-10">
+            <header class="px-8 py-4 sticky top-0 z-10 border-b" style="background: rgba(15, 23, 42, .55); backdrop-filter: blur(10px); border-color: rgba(148, 163, 184, .15);">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400 bg-clip-text text-transparent">

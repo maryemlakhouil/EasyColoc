@@ -238,21 +238,22 @@
                     <p class="text-sm muted mt-1">Colocation & membres</p>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    @if(!isset($colocation) || !$colocation)
-                        <a href="{{ route('colocations.create') }}" class="btn-primary">
-                            + Nouvelle colocation
-                        </a>
-                    @else
-                        <a href="{{ route('depences.index', $colocation) }}" class="btn-primary">
-                            Voir dépenses
-                        </a>
-                    @endif
+               
 
-                    <div class="avatar">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
-                </div>
+                {{-- Header actions --}}
+<div class="flex items-center gap-3">
+    <a href="{{ route('colocations.create') }}"
+       class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-medium">
+        + Nouvelle colocation
+    </a>
+
+    @if(isset($colocation) && $colocation)
+        <a href="{{ route('depences.index', $colocation) }}"
+           class="px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 font-medium">
+            Voir dépenses
+        </a>
+    @endif
+</div>
             </div>
         </header>
 
