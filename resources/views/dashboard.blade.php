@@ -445,8 +445,44 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                {{-- MODAL Invitation --}}
+                                <div id="inviteModal" class="fixed inset-0 z-50 hidden">
+                                    <div id="inviteModalOverlay" class="absolute inset-0 bg-black/50"></div>
 
-                                <button class="btn-ghost w-full mt-4" type="button">
+                                    <div class="relative min-h-screen flex items-center justify-center p-4">
+                                        <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl text-gray-900">
+                                            <div class="flex items-center justify-between px-6 py-4 border-b">
+                                                <h3 class="text-xl font-semibold">Inviter un membre</h3>
+                                                <button type="button" id="closeInviteModal" class="p-2 rounded-lg hover:bg-gray-100">✕</button>
+                                            </div>
+
+                                            <form method="POST" action="{{ route('invitations.store', $colocation) }}" class="p-6 space-y-4">
+                                                @csrf
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                                                    <select name="email" class="mt-1 w-full border rounded-lg p-2" required>
+                                                        <option value="">Choisir un email...</option>
+                                                        @foreach($availableUsers ?? [] as $u)
+                                                            <option value="{{ $u->email }}">{{ $u->email }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+
+                                                <div class="flex justify-end gap-3 pt-2">
+                                                    <button type="button" id="cancelInviteModal" class="px-4 py-2 rounded-lg border">
+                                                        Annuler
+                                                    </button>
+                                                    <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                                                        Envoyer invitation
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <button class="btn-ghost w-full mt-4" type="button" id="openInviteModal">
                                     + Inviter un membre
                                 </button>
                             </div>
@@ -459,5 +495,56 @@
         </main>
     </div>
 </div>
+<script>
+        // Expense modal
+        const expenseModal = document.getElementById('expenseModal');
+        const openExpenseBtn = document.getElementById('openExpenseModal');
+        const closeExpenseBtn = document.getElementById('closeExpenseModal');
+        const cancelExpenseBtn = document.getElementById('cancelExpenseModal');
+        const expenseOverlay = document.getElementById('expenseModalOverlay');
+
+        function openExpenseModal() {
+            expenseModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        function closeExpenseModal() {
+            expenseModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        openExpenseBtn?.addEventListener('click', openExpenseModal);
+        closeExpenseBtn?.addEventListener('click', closeExpenseModal);
+        cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
+        expenseOverlay?.addEventListener('click', closeExpenseModal);
+
+        // Invite modal
+        const inviteModal = document.getElementById('inviteModal');
+        const openInviteBtn = document.getElementById('openInviteModal');
+        const closeInviteBtn = document.getElementById('closeInviteModal');
+        const cancelInviteBtn = document.getElementById('cancelInviteModal');
+        const inviteOverlay = document.getElementById('inviteModalOverlay');
+
+        function openInviteModal() {
+            inviteModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        function closeInviteModal() {
+            inviteModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        openInviteBtn?.addEventListener('click', openInviteModal);
+        closeInviteBtn?.addEventListener('click', closeInviteModal);
+        cancelInviteBtn?.addEventListener('click', closeInviteModal);
+        inviteOverlay?.addEventListener('click', closeInviteModal);
+
+        // ESC to close any modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeExpenseModal();
+                closeInviteModal();
+            }
+        });
+    </script>
 </body>
 </html>

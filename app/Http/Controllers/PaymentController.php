@@ -7,21 +7,28 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
+    
     public function pay(Request $request, Regle $regle)
     {
-        $colocation = $regle->colocation;
+        // Sécurité : seulement le débiteur (from_user) ou l'owner ou l'admin
+        $user = $request->user();
 
-        if ($request->user()->id !== $regle->from_user_id && $request->user()->id !== $colocation->owner_id) {
-            abort(403);
-        }
+        $isDebtor = $user->id === $regle->from_user_id;
+        $isOwner  = $user->id === $regle->colocation->owner_id;
+        $isAdmin  = $user->role === 'admin';
 
+        abort_if(!($isDebtor || $isOwner || $isAdmin), 403);
+
+        // Déjà payé -> on ne refait rien
         if ($regle->paid_at) {
-            return back()->with('error', 'Déjà payé.');
+            return back()->with('success', 'Déjà payé.');
         }
 
-        $regle->update(['paid_at' => now()]);
+        $regle->update([
+            'paid_at' => now(),
+        ]);
 
-        return back()->with('success', 'Paiement marqué comme payé.');
+        return back()->with('success', 'Paiement enregistré.');
     }
 }
 

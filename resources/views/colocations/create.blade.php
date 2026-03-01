@@ -49,32 +49,57 @@
                 </a>
             </div>
 
-            <!-- Navigation -->
-            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 9l-3-3m0 0l-3 3m3-3v5" />
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
+           @php
+    $isAdmin = auth()->check() && auth()->user()->role === 'admin';
 
-                <a href="{{ route('colocations.my') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-400 bg-slate-800 transition-colors font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Colocations</span>
-                </a>
+    // Route cible du bouton "Dashboard"
+    $dashboardRoute = $isAdmin ? 'admin.dashboard' : 'dashboard';
 
-                <div class="border-t border-slate-700 my-4"></div>
+    // Active state
+    $isDashboardActive = request()->routeIs($dashboardRoute);
+    $isColocActive = request()->routeIs('colocations.*');
+    $isProfileActive = request()->routeIs('profile.*');
 
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Profil</span>
-                </a>
-            </nav>
+    $linkBase = "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors";
+    $linkInactive = "text-gray-400 hover:bg-slate-800 hover:text-white";
+    $linkActive = "text-blue-400 bg-slate-800 font-medium";
+@endphp
 
+<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    {{-- Dashboard --}}
+    <a href="{{ route($dashboardRoute) }}"
+       class="{{ $linkBase }} {{ $isDashboardActive ? $linkActive : $linkInactive }}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 9l-3-3m0 0l-3 3m3-3v5" />
+        </svg>
+        <span>Dashboard</span>
+    </a>
+
+    {{-- Colocations (accessible aux membres/owners; si admin tu peux la cacher) --}}
+    @if(!$isAdmin)
+        <a href="{{ route('colocations.my') }}"
+           class="{{ $linkBase }} {{ $isColocActive ? $linkActive : $linkInactive }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+            </svg>
+            <span>Colocations</span>
+        </a>
+    @endif
+
+    <div class="border-t border-slate-700 my-4"></div>
+
+    {{-- Profil --}}
+    <a href="{{ route('profile.edit') }}"
+       class="{{ $linkBase }} {{ $isProfileActive ? $linkActive : $linkInactive }}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Profil</span>
+    </a>
+</nav>
             <!-- Reputation Section -->
             <div class="px-4 py-6 border-t border-slate-700 space-y-3">
                 <div class="text-xs font-semibold text-gray-400 uppercase">Votre Réputation</div>

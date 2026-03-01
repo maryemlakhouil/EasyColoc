@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Colocation;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -38,7 +39,9 @@ class DashboardController extends Controller
                 }
             ]);
         }
+        $excludedIds = $colocation ? $colocation->members()->pluck('users.id')->push($colocation->owner_id)->unique()->toArray() : [];
+$availableUsers = User::whereNotIn('id', $excludedIds)->orderBy('email')->get(['id','email']);
 
-        return view('dashboard', compact('colocation'));
+return view('dashboard', compact('colocation', 'availableUsers'));
     }
 }

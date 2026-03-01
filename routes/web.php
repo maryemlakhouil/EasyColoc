@@ -15,10 +15,20 @@ use App\Http\Controllers\AdminController;
 
 
 
-
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::middleware(['auth','banned'])->get('/redirect', function () {
+    $user = auth()->user();
+
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('dashboard');
+})->name('redirect.after_login');
+
 
 Route::middleware(['auth', 'banned'])->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::middleware('auth')->group(function () {
@@ -66,6 +76,7 @@ Route::middleware(['auth','banned','role:admin'])->group(function () {
     Route::post('/admin/users/{user}/ban', [AdminController::class, 'ban'])->name('admin.users.ban');
     Route::post('/admin/users/{user}/unban', [AdminController::class, 'unban'])->name('admin.users.unban');
 });
+
 
 Route::middleware(['auth', 'banned', 'role:owner'])->group(function () {
     Route::post('/colocations/{colocation}/invitations', [InvitationController::class, 'store'])

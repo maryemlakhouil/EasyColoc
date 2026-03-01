@@ -7,6 +7,8 @@ use App\Models\Colocation;
 use App\Http\Requests\StoreColocationRequest;   
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Services\SettlementService;
+use App\Models\Regle;
 
 
 class ColocationController extends Controller
@@ -72,8 +74,13 @@ class ColocationController extends Controller
     ]);
 
         $usersEmails = User::orderBy('email')->get(['id', 'email']);
+        $openSettlements = Regle::where('colocation_id', $colocation->id)
+        ->whereNull('paid_at')
+        ->with(['fromUser', 'toUser'])
+        ->orderBy('id', 'desc')
+        ->get();
 
-        return view('colocations.show', compact('colocation', 'usersEmails'));
+        return view('colocations.show', compact('colocation', 'usersEmails', 'openSettlements'));
     }
 
     public function my()
@@ -107,10 +114,10 @@ class ColocationController extends Controller
     }
 
 
-    public function cancel(Request $request, Colocation $colocation)
+    public function cancel(Request $request, Colocation $colocation, SettlementService $settlementService)
     {
         abort_if(auth()->id() !== $colocation->owner_id, 403);
-
+        $settlementService->cancelColocation($colocation);
         DB::transaction(function () use ($colocation) {
             // 1) annuler la colocation
             $colocation->update([

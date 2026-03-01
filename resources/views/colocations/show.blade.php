@@ -160,39 +160,33 @@
             <div class="space-y-6">
 
                 {{-- Bloc "Qui doit à qui ?" (placeholder si tu n'as pas encore settlements ici) --}}
-                <div class="bg-white rounded-2xl shadow border p-5">
+                <div class="bg-white rounded-2xl shadow border p-4">
                     <h3 class="font-semibold mb-3">Qui doit à qui ?</h3>
 
-                    {{-- Option 1 : si tu passes $openSettlements à cette vue --}}
-                    @isset($openSettlements)
-                        @if($openSettlements->isEmpty())
-                            <p class="text-gray-500 text-sm">Aucun remboursement en attente.</p>
-                        @else
-                            <div class="space-y-3">
-                                @foreach($openSettlements as $s)
-                                    <div class="rounded-xl border p-4 flex items-center justify-between">
-                                        <div class="text-sm text-gray-700">
-                                            <strong>{{ $s->fromUser->name }}</strong>
-                                            doit
-                                            <strong>{{ number_format($s->amount, 2) }} €</strong>
-                                            à
-                                            <strong>{{ $s->toUser->name }}</strong>
-                                        </div>
-
-                                        <form method="POST" action="{{ route('settlements.pay', $s) }}">
-                                            @csrf
-                                            <button class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50">
-                                                Marquer payé
-                                            </button>
-                                        </form>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+                    @if($openSettlements->isEmpty())
+                        <p class="text-gray-500 text-sm">Aucun remboursement nécessaire.</p>
                     @else
-                        {{-- Option 2 : si tu n'as pas encore la partie paiement ici --}}
-                        <p class="text-gray-500 text-sm">Aucun remboursement en attente.</p>
-                    @endisset
+                        <ul class="space-y-2">
+                            @foreach($openSettlements as $s)
+                                <li class="rounded-xl border p-3 flex items-center justify-between">
+                                    <div class="text-sm text-gray-700">
+                                        <strong>{{ $s->fromUser->name }}</strong>
+                                        doit
+                                        <strong>{{ number_format($s->montant, 2) }} €</strong>
+                                        à
+                                        <strong>{{ $s->toUser->name }}</strong>
+                                    </div>
+
+                                    <form method="POST" action="{{ route('settlements.pay', $s) }}">
+                                        @csrf
+                                        <button class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-50">
+                                            Marquer payé
+                                        </button>
+                                    </form>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
 
                 {{-- Carte sombre membres (comme screenshot) --}}
