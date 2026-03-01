@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Colocation;
 use App\Http\Requests\StoreColocationRequest;   
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
 
 class ColocationController extends Controller
 {
@@ -103,7 +105,42 @@ class ColocationController extends Controller
         return redirect()->route('colocations.create')
             ->with('error', 'Vous n’avez pas de colocation active.');
     }
- 
+
+
+    public function cancel(Request $request, Colocation $colocation)
+    {
+        abort_if(auth()->id() !== $colocation->owner_id, 403);
+
+        DB::transaction(function () use ($colocation) {
+            // 1) annuler la colocation
+            $colocation->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+            ]);
+
+            // 2) faire quitter automatiquement tous les membres encore actifs
+            // pivot: colocation_user (user_id, colocation_id, status, left_at, ...)
+            $colocation->members()
+                ->wherePivotNull('left_at')
+                ->updateExistingPivot(
+                    $colocation->members()->wherePivotNull('left_at')->pluck('users.id')->toArray(),
+                    ['left_at' => now()]
+                );
+
+            // IMPORTANT: si ton owner n’est PAS attaché au pivot, pas besoin de le traiter.
+            // Si ton owner est attaché aussi, il aura left_at rempli, et c'est OK.
+        });
+
+        return back()->with('success', 'Colocation annulée. Les membres ont quitté automatiquement.');
+    }
+    
+    public function destroy(Colocation $colocation)
+    {
+        abort_if(auth()->id() !== $colocation->owner_id, 403);
+
+        $colocation->delete(); // cascade fera le reste
+        return redirect()->route('dashboard')->with('success', 'Colocation supprimée définitivement.');
+    }
 }
 
 
