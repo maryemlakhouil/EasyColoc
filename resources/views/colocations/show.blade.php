@@ -61,6 +61,22 @@
                             <div class="text-lg font-semibold">{{ $colocation->owner->name }}</div>
                             <div class="text-sm text-gray-500">{{ $colocation->owner->email }}</div>
                         </div>
+                        @if(auth()->id() === $colocation->owner_id)
+                        <div class="flex gap-2">
+                            <form method="POST" action="{{ route('colocations.cancel', $colocation) }}"
+                                onsubmit="return confirm('Annuler la colocation ? Les membres vont quitter automatiquement.')">
+                                @csrf
+                                <button class="px-4 py-2 rounded bg-orange-600 text-white">Annuler la colocation</button>
+                            </form>
+
+                            <form method="POST" action="{{ route('colocations.destroy', $colocation) }}"
+                                onsubmit="return confirm('Supprimer définitivement ? Toutes les données seront supprimées.')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="px-4 py-2 rounded bg-red-600 text-white">Supprimer définitivement</button>
+                            </form>
+                        </div>
+                    @endif
                     </div>
 
                     {{-- Bouton Quitter si Member --}}

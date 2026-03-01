@@ -34,6 +34,9 @@ Route::middleware(['auth', 'banned'])->group(function () {
     Route::get('/colocations/{colocation}', [ColocationController::class, 'show'])->name('colocations.show');
     Route::get('/my-colocation', [ColocationController::class, 'my'])->name('colocations.my');
     Route::post('/colocations/{colocation}/cancel', [ColocationController::class, 'cancel'])->name('colocations.cancel');
+      Route::delete('/colocations/{colocation}', [ColocationController::class, 'destroy'])
+    ->name('colocations.destroy');
+    
     // quitter une colocation (member)
     Route::post('/colocations/{colocation}/leave', [MembershipController::class, 'leave'])->name('colocations.leave');
 
