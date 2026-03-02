@@ -34,6 +34,11 @@ class Colocation extends Model
     {
         return $this->hasMany(\App\Models\Depence::class);
     }
+
+    public function regles()
+    {
+        return $this->hasMany(Regle::class);
+    }
 }
 
 
