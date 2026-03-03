@@ -14,10 +14,10 @@ class DepenceController extends Controller
 
 public function index(Request $request, Colocation $colocation)
 {
-    // 1) Sécurité: accès colocation
+    // 1- accès colocation
     $this->authorizeColocationAccess($request->user(), $colocation);
 
-    // 2) Membres actifs + owner (sans doublons)
+    // 2- Membres actifs + owner 
     $acceptedMembers = $colocation->members()
         ->wherePivot('status', 'accepted')
         ->wherePivot('left_at', null)
@@ -27,15 +27,16 @@ public function index(Request $request, Colocation $colocation)
 
     $members = $acceptedMembers
         ->push($owner)
-        ->filter()            // au cas où owner est null
+        ->filter()           
         ->unique('id')
         ->values();
 
-    // 3) Filtres mois/année
+    // 3 - Filtres mois 
     $month = $request->query('month');
     $year  = $request->query('year');
 
-    // 4) Dépenses (depences) filtrées
+    // 4 - Charger les dépenses
+
     $depencesQuery = $colocation->depences()
         ->with(['payer', 'category'])
         ->latest('date');
@@ -46,36 +47,37 @@ public function index(Request $request, Colocation $colocation)
 
     $depences = $depencesQuery->get();
 
-    // 5) Catégories (pour modal + affichage)
+    // 5 - Catégories 
     $categories = $colocation->categories()->orderBy('name')->get();
 
-    // 6) Users disponibles pour invitation (exclude membres + owner)
+    // 6- Users disponibles pour invitation 
+
     $excludedIds = $members->pluck('id')->toArray();
 
     $availableUsers = User::whereNotIn('id', $excludedIds)
         ->orderBy('email')
         ->get(['id', 'email']);
 
-    // 7) Synthèses simples
+    // 7 - Dépenses par membre
     $byMember = $depences->groupBy('payer_id')->map(fn ($items) => round((float) $items->sum('amount'), 2));
     $byCategory = $depences->groupBy('category_id')->map(fn ($items) => round((float) $items->sum('amount'), 2));
 
-    // 8) Total / part individuelle
+    // 8-  Total / part individuelle
     $total = round((float) $depences->sum('amount'), 2);
     $memberCount = $members->count();
     $share = $memberCount > 0 ? round($total / $memberCount, 2) : 0.0;
 
-    // 9) Total payé par membre
+    // 9 -Total payé par membre
     $paidByMember = $depences->groupBy('payer_id')
         ->map(fn ($items) => round((float) $items->sum('amount'), 2));
 
-    // 10) Balance = payé - part
+    // 10 Balance = payé - part
     $balances = $members->mapWithKeys(function ($m) use ($paidByMember, $share) {
         $paid = (float) ($paidByMember[$m->id] ?? 0);
         return [$m->id => round($paid - $share, 2)];
     });
 
-    // 11) Qui doit à qui (settlements)
+    // 11- Qui doit à qui 
     $creditors = [];
     $debtors = [];
 
@@ -106,12 +108,11 @@ public function index(Request $request, Colocation $colocation)
         if ($debtors[$i]['montant'] <= 0.00001) $i++;
         if ($creditors[$j]['montant'] <= 0.00001) $j++;
     }
-    $this->syncSettlements($colocation, $settlements);
     $openSettlements = \App\Models\Regle::where('colocation_id', $colocation->id)
         ->whereNull('paid_at')
         ->with(['fromUser','toUser'])
         ->get();
-    // 12) View
+    
     return view('depences.index', compact(
         'colocation',
         'depences',
@@ -168,6 +169,7 @@ public function index(Request $request, Colocation $colocation)
 
         return back()->with('success', 'Dépense ajoutée.');
     }
+
     public function destroy(Request $request, Depence $depence)
     {
         $this->authorizeColocationAccess($request->user(), $depence->colocation);
@@ -201,7 +203,7 @@ public function index(Request $request, Colocation $colocation)
     
     private function syncSettlements(Colocation $colocation, array $settlements): void
     {
-        // Supprimer uniquement les dettes non payées (on garde l'historique payé)
+        // on garde l'historique payé
         \App\Models\Regle::where('colocation_id', $colocation->id)
             ->whereNull('paid_at')
             ->delete();

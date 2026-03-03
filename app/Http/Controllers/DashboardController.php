@@ -13,7 +13,7 @@ class DashboardController extends Controller
         $user = $request->user();
         $colocation = null;
 
-        // 1) Si user est owner : sa colocation active
+        // 1 - Si user est owner : sa colocation active
         if ($user->role === 'owner') {
             $colocation = Colocation::where('owner_id', $user->id)
                 ->where('status', 'active')
@@ -39,9 +39,11 @@ class DashboardController extends Controller
                 }
             ]);
         }
-        $excludedIds = $colocation ? $colocation->members()->pluck('users.id')->push($colocation->owner_id)->unique()->toArray() : [];
-$availableUsers = User::whereNotIn('id', $excludedIds)->orderBy('email')->get(['id','email']);
+        // Calculer les utilisateurs retires 
 
-return view('dashboard', compact('colocation', 'availableUsers'));
+        $excludedIds = $colocation ? $colocation->members()->pluck('users.id')->push($colocation->owner_id)->unique()->toArray() : [];
+        $availableUsers = User::whereNotIn('id', $excludedIds)->orderBy('email')->get(['id','email']);
+
+        return view('dashboard', compact('colocation', 'availableUsers'));
     }
 }

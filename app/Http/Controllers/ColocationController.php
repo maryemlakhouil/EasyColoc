@@ -13,16 +13,20 @@ use App\Models\Regle;
 
 class ColocationController extends Controller
 {
+    //1 -  réer une colocation
+
     public function create()
     {
         return view('colocations.create');
     }
 
+    // 2 - enregistrer une nouvelle colocation 
+
     public function store(StoreColocationRequest $request)
     {
         $user = $request->user();   
 
-        // Règle: un user ne peut pas créer une nouvelle colocation s'il en a déjà une active (owner)
+        // cas 1 : un user ne peut pas créer une nouvelle colocation s'il en a déjà une active (owner)
 
         $alreadyOwnerActive = $user->colocationsOwned()->where('status', 'active')->exists();
         if ($alreadyOwnerActive) {
@@ -53,27 +57,27 @@ class ColocationController extends Controller
             ]);
         }
 
-        // On peut aussi mettre son role en "owner" ici 
-        // mais ça sera mieux quand on aura Membership. Pour l’instant simple :
         if ($user->role === 'member') {
             $user->update(['role' => 'owner']);
         }
 
-        return redirect()->route('colocations.show', $colocation)
-            ->with('success', 'Colocation créée avec succès.');
+        return redirect()->route('colocations.show', $colocation)->with('success', 'Colocation créée avec succès.');
     }
+
+    // 3 - Affiche les détails d’une colocation : 
 
     public function show(Colocation $colocation)
     {
         $colocation->load([
-        'owner',
-        'members' => function ($q) {
-            $q->wherePivot('status', 'accepted')
-              ->wherePivot('left_at', null);
-        }
-    ]);
-
+            'owner',
+            'members' => function ($q) {
+                $q->wherePivot('status', 'accepted')
+                ->wherePivot('left_at', null);
+            }
+        ]);
+        
         $usersEmails = User::orderBy('email')->get(['id', 'email']);
+        // les dettes non payées 
         $openSettlements = Regle::where('colocation_id', $colocation->id)
         ->whereNull('paid_at')
         ->with(['fromUser', 'toUser'])
@@ -82,6 +86,8 @@ class ColocationController extends Controller
 
         return view('colocations.show', compact('colocation', 'usersEmails', 'openSettlements'));
     }
+
+    // la colocation active de l’utilisateur 
 
     public function my()
     {
@@ -109,43 +115,44 @@ class ColocationController extends Controller
             return redirect()->route('colocations.show', $colocation);
         }
 
-        return redirect()->route('colocations.create')
-            ->with('error', 'Vous n’avez pas de colocation active.');
+        return redirect()->route('colocations.create')->with('error', 'Vous n’avez pas de colocation active.');
     }
 
+    // Annule une colocation 
 
     public function cancel(Request $request, Colocation $colocation, SettlementService $settlementService)
     {
+
         abort_if(auth()->id() !== $colocation->owner_id, 403);
+
         $settlementService->cancelColocation($colocation);
+
         DB::transaction(function () use ($colocation) {
-            // 1) annuler la colocation
+            
+            // 1 - annuler la colocation
             $colocation->update([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
 
-            // 2) faire quitter automatiquement tous les membres encore actifs
-            // pivot: colocation_user (user_id, colocation_id, status, left_at, ...)
-            $colocation->members()
+            // 2 - quitter automatiquement tous les membres 
+                $colocation->members()
                 ->wherePivotNull('left_at')
                 ->updateExistingPivot(
                     $colocation->members()->wherePivotNull('left_at')->pluck('users.id')->toArray(),
                     ['left_at' => now()]
                 );
-
-            // IMPORTANT: si ton owner n’est PAS attaché au pivot, pas besoin de le traiter.
-            // Si ton owner est attaché aussi, il aura left_at rempli, et c'est OK.
         });
 
         return back()->with('success', 'Colocation annulée. Les membres ont quitté automatiquement.');
     }
-    
+    // 5 - supprimer colocation 
+
     public function destroy(Colocation $colocation)
     {
         abort_if(auth()->id() !== $colocation->owner_id, 403);
 
-        $colocation->delete(); // cascade fera le reste
+        $colocation->delete(); 
         return redirect()->route('dashboard')->with('success', 'Colocation supprimée définitivement.');
     }
 }

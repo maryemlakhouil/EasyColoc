@@ -24,7 +24,7 @@ class InvitationController extends Controller
             'email' => ['required', 'email', 'max:255'],
         ]);
 
-        // éviter inviter quelqu’un déjà membre accepté (et non parti)
+        // éviter inviter quelqu’un déjà membre accepté 
         $existingUser = User::where('email', $data['email'])->first();
 
         if ($existingUser) {
@@ -47,7 +47,7 @@ class InvitationController extends Controller
             'expires_at' => now()->addDays(3),
         ]);
 
-        // OPTION: si l'utilisateur existe déjà, on crée un membership "pending"
+        //  si l'utilisateur existe déjà
         if ($existingUser) {
             $colocation->members()->syncWithoutDetaching([
                 $existingUser->id => ['status' => 'pending', 'left_at' => null],
@@ -75,13 +75,13 @@ class InvitationController extends Controller
             return redirect()->route('dashboard')->with('error', 'Invitation expirée.');
         }
 
-        // Si guest : décider login ou register
+        // décider login ou register
         if (!auth()->check()) {
             $emailExists = User::where('email', $invitation->invited_email)->exists();
 
             $target = $emailExists ? route('login') : route('register');
 
-            // guest() garde l'URL intended => après login/register on revient ici
+            // guest() garde l'URL intended  
             return redirect()->guest($target)
                 ->with('info', 'Connectez-vous / inscrivez-vous avec le même email que l’invitation.');
         }
@@ -112,7 +112,7 @@ class InvitationController extends Controller
             abort(403);
         }
 
-        // Règle: une seule colocation active par user (membership accepté + pas left + coloc active)
+        // Règle: une seule colocation active par user 
         $hasActive = $request->user()->colocations()
             ->wherePivot('status', 'accepted')
             ->wherePivot('left_at', null)
@@ -160,7 +160,7 @@ class InvitationController extends Controller
 
         $invitation->update(['status' => 'refused']);
 
-        // si pivot pending existe, on peut le supprimer (optionnel)
+        // si pivot pending existe
         $invitation->colocation->members()->detach($request->user()->id);
 
         return redirect()->route('dashboard')->with('success', 'Invitation refusée.');

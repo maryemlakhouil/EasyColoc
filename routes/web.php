@@ -31,6 +31,7 @@ Route::middleware(['auth','banned'])->get('/redirect', function () {
 
 
 Route::middleware(['auth', 'banned'])->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

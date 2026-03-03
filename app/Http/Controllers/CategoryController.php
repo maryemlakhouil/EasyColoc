@@ -26,7 +26,6 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        // option: owner only
         if ($category->colocation->owner_id !== auth()->id()) {
             abort(403);
         }

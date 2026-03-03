@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 
 class SettlementService
 {
+    // Calculer combien un utilisateur doit encore (debt)
+
     public function debtAmount(int $colocationId, int $userId): float
     {
         return (float) Regle::where('colocation_id', $colocationId)
@@ -16,6 +18,7 @@ class SettlementService
             ->whereNull('paid_at')
             ->sum('montant');
     }
+    // Vérifier si un utilisateur a une dette :
 
     public function hasDebt(int $colocationId, int $userId): bool
     {
@@ -27,6 +30,7 @@ class SettlementService
         $user->increment('reputation_score', $delta);
     }
 
+
     public function transferDebtToOwner(Colocation $colocation, User $member): void
     {
         Regle::where('colocation_id', $colocation->id)
@@ -34,6 +38,7 @@ class SettlementService
             ->whereNull('paid_at')
             ->update(['from_user_id' => $colocation->owner_id]);
     }
+    // Quand un membre quitte 
 
     public function handleMemberLeave(Colocation $colocation, User $member): void
     {
@@ -44,7 +49,7 @@ class SettlementService
             if ($debt > 0.00001) {
                 $this->adjustReputation($member, -1);
 
-                // redistribution sur les autres membres (ou transfert owner si personne)
+                // redistribution sur les autres membres
                 $this->redistributeMemberDebt($colocation, $member);
             } else {
                 $this->adjustReputation($member, +1);
@@ -53,6 +58,7 @@ class SettlementService
             $colocation->members()->updateExistingPivot($member->id, ['left_at' => now()]);
         });
     }
+    // Quand le owner retirer un membre 
 
     public function handleOwnerRemoveMember(Colocation $colocation, User $member): void
     {
@@ -62,7 +68,6 @@ class SettlementService
 
             $this->adjustReputation($member, $debt > 0.00001 ? -1 : +1);
 
-            // règle: dette du member => imputée à l’owner
             if ($debt > 0.00001) {
                 $this->transferDebtToOwner($colocation, $member);
             }
@@ -70,6 +75,7 @@ class SettlementService
             $colocation->members()->updateExistingPivot($member->id, ['left_at' => now()]);
         });
     }
+    // Quand la colocation est annulée : 
 
     public function cancelColocation(Colocation $colocation): void
     {
@@ -91,7 +97,7 @@ class SettlementService
             }
         });
     }
-
+        // qelqu’un quitte avec dette
     private function redistributeMemberDebt(Colocation $colocation, User $leaver): void
     {
         $remaining = $colocation->members()
@@ -136,5 +142,25 @@ class SettlementService
             ->where('from_user_id', $leaver->id)
             ->whereNull('paid_at')
             ->delete();
+    }
+
+    // Calcul du solde net par utilisateur:
+    
+    private function balancesFromRegles(int $colocationId)
+    {
+        $rows = Regle::where('colocation_id', $colocationId)
+            ->whereNull('paid_at')
+            ->selectRaw('from_user_id as user_id, -SUM(montant) as net')
+            ->groupBy('from_user_id')
+            ->unionAll(
+                Regle::where('colocation_id', $colocationId)
+                    ->whereNull('paid_at')
+                    ->selectRaw('to_user_id as user_id, SUM(montant) as net')
+                    ->groupBy('to_user_id')
+            )
+            ->get();
+
+        // net final par user
+        return $rows->groupBy('user_id')->map(fn($g) => round((float) $g->sum('net'), 2));
     }
 }

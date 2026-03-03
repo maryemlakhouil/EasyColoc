@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     
-
-        
     public function update(Request $request)
     {
         $user = $request->user();

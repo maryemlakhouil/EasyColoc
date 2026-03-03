@@ -29,7 +29,7 @@ class MembershipController extends Controller
             return back()->with('error', "Vous n'êtes pas membre actif de cette colocation.");
         }
 
-        // ✅ tout est géré dans le service
+        // tout est géré dans le service
         $settlementService->handleMemberLeave($colocation, $user);
 
         return redirect()->route('dashboard')->with('success', 'Vous avez quitté la colocation.');
@@ -45,7 +45,7 @@ class MembershipController extends Controller
             return back()->with('error', "Vous ne pouvez pas retirer l'owner.");
         }
 
-        // doit être membre accepté et actif
+        // doit etre membre accepté et actif
         $isActiveMember = $colocation->members()
             ->where('users.id', $user->id)
             ->wherePivot('status', 'accepted')
@@ -56,7 +56,7 @@ class MembershipController extends Controller
             return back()->with('error', "Ce user n'est pas un membre actif.");
         }
 
-        // ✅ tout est géré dans le service (réputation + dette -> owner + left_at)
+        // tout est géré dans le service 
         $settlementService->handleOwnerRemoveMember($colocation, $user);
 
         return back()->with('success', 'Membre retiré.');
